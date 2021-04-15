@@ -1,8 +1,13 @@
-const express = require('express')
-const router = express.Router()
+const express = require('express');
 const common = require('../controllers/common')
 
-router.get('/ping', common.ping) // 핑
-router.post('/', common.createStudent)
+const router = express.Router();
 
-module.exports = router
+router.get('/', (req, res) => {
+	res.send('This is login&signUp');
+});
+
+router.post('/user', common.signUp);
+router.post('/login', common.login);
+
+module.exports = router;

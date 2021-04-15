@@ -11,7 +11,7 @@ const app = express();
 app.use(morgan('dev'))
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-app.use('/', require('./routes/user'));
+app.use('/', require('./routes/common'));
 //app.use('/user', require('./routes/user'));
 
 // app.use((req, res, next) =>{

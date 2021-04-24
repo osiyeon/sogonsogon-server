@@ -24,8 +24,8 @@ DROP TABLE IF EXISTS `users`;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `users` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `region_no` INT(11) UNSIGNED NOT NULL,
-  `sector_no` INT(11) UNSIGNED NOT NULL,
+  `region_no` INT(11) UNSIGNED NOT NULL DEFAULT '0',
+  `sector_no` INT(11) UNSIGNED NOT NULL DEFAULT '0',
   `email` VARCHAR(320) NOT NULL DEFAULT '',
   `password` CHAR(41) NOT NULL DEFAULT '',
   `nickname` VARCHAR(40) NOT NULL DEFAULT '',

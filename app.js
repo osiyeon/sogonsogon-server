@@ -6,7 +6,7 @@ const common = require('./routes/common');
 dotenv.config();
 
 const app = express();
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 4000);
 
 app.use(morgan('dev')) // 미들웨어
 app.use(express.json());

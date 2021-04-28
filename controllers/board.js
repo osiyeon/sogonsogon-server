@@ -46,12 +46,10 @@ const controller = {
                     `, [ user_no, title, content, region_no, sector_no ])
                     await connection.commit()
     
-                    next(
-                        res.json({
-                            code: 200,
-                            success: '게시글이 정상적으로 등록되었습니다.'
-                        })
-                    )
+                    res.json({
+                        code: 200,
+                        success: '게시글이 정상적으로 등록되었습니다.'
+                    })       
                 } catch(e) {
                     await connection.rollback()
                     next(e)
@@ -62,6 +60,61 @@ const controller = {
         } catch (e) {
             next(e)
         }
+    },
+    async editBoard(req, res, next){
+        try {
+            const board_no = req.body.board_no
+            const title = req.body.title
+            const content = req.body.content
+            const category = req.body.category
+
+            const [ result ] = await pool.query(`
+            SELECT *
+            FROM boards
+            WHERE no = ?
+            AND enabled = 1;
+            `, [ board_no ])
+
+            if (result.length < 1) res.json({ message: `게시글이 존재하지 않습니다.`})
+            else {
+                const connection = await pool.getConnection(async conn => conn)
+                try {
+                    await connection.beginTransaction()
+ 
+                    let region_no  = null
+                    let sector_no = null
+
+                    if (category === 'region'){
+                        region_no = req.users.region_no
+                    } else if (category == 'sector') {
+                        sector_no = req.users.sector_no
+                    }    
+
+                    await connection.query(`
+                    UPDATE boards
+                    SET 
+                    title = ?,
+                    content = ?,
+                    region_no = ?,
+                    sector_no = ?
+                    WHERE no = ?
+                    AND enabled = 1;
+                    `, [ title, content, region_no, sector_no, board_no])
+
+                    await connection.commit()
+                    res.json({ message: `게시글이 변경되었습니다.`})
+                    
+                } catch (e){
+                    await connection.rollback()
+                    next(e)
+                } finally {
+                    connection.release()
+                }
+            }
+        } catch (e){ 
+            next(e)
+        }
+
     },
     async AllOfBoards(req, res, next){
         try {
@@ -86,9 +139,10 @@ const controller = {
             AND enabled = 1
             LIMIT ? OFFSET ? 
             `, [ region_no, sector_no, Number(count), Number(page*count) ])
-            
+
             res.json({
-                results
+                code:200,
+                board_list: results
             })
         }
         catch(e){

@@ -102,7 +102,7 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `region_2` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bcode` INT(6) UNSIGNED NOT NULL,
+  `bcode` INT(5) UNSIGNED NOT NULL,
   `bname` VARCHAR(20) NOT NULL DEFAULT '',
   PRIMARY KEY (`no`))
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

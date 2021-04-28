@@ -6,7 +6,9 @@ module.exports = {
     sign(user) {
         const payload = {
             user_no: user.user_no,
-            email: user.email
+            email: user.email,
+            region_no: user.region_no,
+            sector_no: user.sector_no
         }
         const token = JWT.sign(payload, config.jwt.secretKey, config.jwt.options)
         return token

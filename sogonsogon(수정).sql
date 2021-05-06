@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` VARCHAR(320) NOT NULL DEFAULT '',
   `password` CHAR(41) NOT NULL DEFAULT '',
   `nickname` VARCHAR(40) NOT NULL DEFAULT '',
+  `image` VARCHAR(400) NOT NULL DEFAULT '',
   `create_datetime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_datetime` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `remove_datetime` DATETIME DEFAULT NULL,
@@ -91,8 +92,8 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- Table `region_1`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `region_1` (
-  `no` INT(11) UNSINGED NOT NULL AUTO_INCREMENT,
-  `bcode` INT(2) UNSIGNED NOT NULL,
+  `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bcode` INT(2) NOT NULL,
   `bname` VARCHAR(20) NOT NULL DEFAULT '',
   PRIMARY KEY (`no`))
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -102,8 +103,9 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `region_2` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bcode` INT(5) UNSIGNED NOT NULL,
+  `bcode` INT(5) NOT NULL,
   `bname` VARCHAR(20) NOT NULL DEFAULT '',
+  `region_1_no` INT(11) NOT NULL,
   PRIMARY KEY (`no`))
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -112,8 +114,9 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `region_3` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bcode` INT(8) UNSIGNED NOT NULL,
+  `bcode` INT(8) NOT NULL,
   `bname` VARCHAR(45) NOT NULL DEFAULT '',
+  `region_2_no` INT(11) NOT NULL,
   PRIMARY KEY (`no`))
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -123,8 +126,9 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `region_4` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `bcode` INT(10) UNSIGNED NOT NULL,
+  `bcode` INT(10) NOT NULL,
   `bname` VARCHAR(20) NOT NULL DEFAULT '',
+  `region_3_no` INT(11) NOT NULL,
   PRIMARY KEY (`no`))
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -32,7 +32,7 @@ const controller = {
           [user_no, board_no, text]
         )
         await connection.commit()
-        res.stauts(200).json({ message: '댓글이 정상적으로 등록되었습니다.'})
+        res.status(200).json({ message: '댓글이 정상적으로 등록되었습니다.'})
       } catch (e) {
         await connection.rollback()
         next(e)

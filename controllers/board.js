@@ -133,7 +133,8 @@ const controller = {
                 await connection.beginTransaction();
                 await connection.query(`
                 UPDATE boards t1
-                RIGHT JOIN comments t2 ON(t2.board_no = t1.no)
+                RIGHT JOIN comments t2 
+                ON (t2.board_no = t1.no)
                 SET
                 t1.remove_datetime = NOW(),
                 t2.remove_datetime = NOW(),

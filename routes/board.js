@@ -8,7 +8,12 @@ const { checkToken } = require('../middlewares/auth')
 // router.get('/', checkToken, common.ping)
 router.post('/', checkToken, board.createBoard)
 router.put('/', checkToken, board.editBoard)
-router.get('/list/all', checkToken, board.AllOfBoards)
+router.get('/', checkToken, board.board)
+router.put('/like', checkToken, board.like)
+router.get('/list/mine', checkToken, board.myBoards)
+router.get('/list/all', checkToken, board.allOfBoards)
+router.get('/list/best', checkToken, board.bestOfBoards)
+router.get('/list/search', checkToken, board.searchedBoards)
 // router.post('/', checkToken, common.login);
 
 module.exports = router

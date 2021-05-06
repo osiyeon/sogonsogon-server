@@ -20,6 +20,14 @@ app.use('/board', require('./routes/board'))
 //     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 //     next();
 // });
+app.use(function(req, res, next){
+    res.status(404).send('Page Not Found')
+})
+app.use(function(err, req, res, next){
+    console.log("err: ", err);
+    return res.status(500).send('Something Broke')
+
+})
 
 app.listen(app.get('port'), ()=>{
     console.log(app.get('port'), '번 포트에서 대기 중');

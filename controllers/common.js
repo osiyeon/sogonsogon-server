@@ -79,10 +79,11 @@ const controller = {
         const email = results[0].email
         const region_no = results[0].region_no
         const sector_no = results[0].sector_no
-        const token = utils.sign({ user_no, email, region_no, sector_no })
+        const token = utils.sign({ user_no, email })
         res.json({
-          code: 200,
           token: token,
+          region_no: region_no,
+          sector_no: sector_no
         })
       } else {
         res.json({

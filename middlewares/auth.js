@@ -14,8 +14,8 @@ module.exports = {
             const verified = auth.verify(token)
             const user_no = verified.user_no
             const email = verified.email
-            const region_no = verified.region_no
-            const sector_no = verified.sector_no
+            // const region_no = verified.region_no
+            // const sector_no = verified.sector_no
             const [ results ] = await pool.query(`
             SELECT
             COUNT(*) AS 'count'
@@ -26,7 +26,7 @@ module.exports = {
             `, [ user_no, email ])
             
             if (results.length === 0) throw Error('Unauthorized Error')
-            req.users = { user_no, email, region_no, sector_no }
+            req.users = { user_no, email }
             next()
         }
         catch (e) {

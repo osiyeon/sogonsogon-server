@@ -11,15 +11,7 @@ const controller = {
             const title = req.body.title
             const content = req.body.content
             const category = req.body.category
-            const [ result ] = await pool.query(`
-            SELECT *
-            FROM users
-            WHERE no = ?
-            AND enabled = 1
-            `, [ user_no ])
-
-            let region_no = null
-            let sector_no = null
+            const category_no = req.body.category_no
 
             const [ result1 ] = await pool.query(`
             SELECT 
@@ -28,34 +20,34 @@ const controller = {
             WHERE title = ?
             AND enabled = 1
             `, [ title ])
-            if (result1[0].count > 0) res.json({ message: "동일한 제목의 게시글이 존재합니다." })
-            else {
-                if (category === 'region'){
-                    region_no = result[0].region_no
-                } else if (category == 'sector') {
-                    sector_no = result[0].sector_no
-                }
-        
-                const connection = await pool.getConnection(async conn => conn)
-                try {
-                    await connection.beginTransaction()
-                    await connection.query(`
-                    INSERT INTO 
-                    boards(user_no, title, content, region_no, sector_no)
-                    VALUE (?, ?, ?, ?, ?);
-                    `, [ user_no, title, content, region_no, sector_no ])
-                    await connection.commit()
+            let region_no = null
+            let sector_no = null
+
+            if (category === 'region'){
+                region_no = category_no
+            } else if (category == 'sector') {
+                sector_no = category_no
+            }
     
-                    res.json({
-                        code: 200,
-                        success: '게시글이 정상적으로 등록되었습니다.'
-                    })       
-                } catch(e) {
-                    await connection.rollback()
-                    next(e)
-                } finally {
-                    connection.release()
-                }
+            const connection = await pool.getConnection(async conn => conn)
+            try {
+                await connection.beginTransaction()
+                await connection.query(`
+                INSERT INTO 
+                boards(user_no, title, content, region_no, sector_no)
+                VALUE (?, ?, ?, ?, ?);
+                `, [ user_no, title, content, region_no, sector_no ])
+                await connection.commit()
+
+                res.json({
+                    code: 200,
+                    success: '게시글이 정상적으로 등록되었습니다.'
+                })       
+            } catch(e) {
+                await connection.rollback()
+                next(e)
+            } finally {
+                connection.release()
             }
         } catch (e) {
             next(e)
@@ -67,6 +59,7 @@ const controller = {
             const title = req.body.title
             const content = req.body.content
             const category = req.body.category
+            const category_no = req.body.category_no
 
             const [ result ] = await pool.query(`
             SELECT *
@@ -85,9 +78,9 @@ const controller = {
                     let sector_no = null
 
                     if (category === 'region'){
-                        region_no = req.users.region_no
+                        region_no = category_no
                     } else if (category == 'sector') {
-                        sector_no = req.users.sector_no
+                        sector_no = category_no
                     }    
 
                     await connection.query(`
@@ -116,19 +109,130 @@ const controller = {
         }
 
     },
-    async AllOfBoards(req, res, next){
+    async board(req, res, next){
         try {
+            const user_no = req.users.user_no
+            const board_no = req.query.board_no
+            const [ result ] = await pool.query(`
+            SELECT *
+            FROM boards
+            WHERE no = ?
+            AND enabled = 1;
+            `, [ board_no ])
+
+            if (result.length < 1) res.json({ message: `게시글이 존재하지 않습니다.`})
+            else {
+                const connection = await pool.getConnection(async conn => conn)
+                try {
+                    await connection.beginTransaction()
+                    await connection.query(`
+                    UPDATE boards
+                    SET 
+                    views = IFNULL(views, 0) + 1
+                    WHERE no = ?
+                    AND enabled = 1;
+                    `, [ board_no ])
+                    
+                    const [ result1 ] = await connection.query(`
+                    SELECT *
+                    FROM boards
+                    WHERE no = ?
+                    AND enabled = 1
+                    `, [ board_no ])
+
+                    const is_mine = user_no === result1[0].user_no ? true: false
+                    utils.formatting_datetime(result1)
+
+                    await connection.commit()
+                    res.json({
+                        is_mine: is_mine,
+                        board: result1[0]
+                    })
+                            
+                } catch (e){
+                    await connection.rollback()
+                    next(e)
+                } finally {
+                    connection.release()
+                }
+            }
+        } catch(e){
+            next(e)
+        }
+    },
+    async like(req, res, next){
+        try {
+            const board_no = req.query.board_no
+            const [ result ] = await pool.query(`
+            SELECT *
+            FROM boards
+            WHERE no = ?
+            AND enabled = 1;
+            `, [ board_no ])
+
+            if (result.length < 1) res.json({ message: `게시글이 존재하지 않습니다.`})
+            else {
+                const connection = await pool.getConnection(async conn => conn)
+                try {
+                    await connection.beginTransaction()
+                    await connection.query(`
+                    UPDATE boards
+                    SET 
+                    likes = IFNULL(likes, 0) + 1
+                    WHERE no = ?
+                    AND enabled = 1;
+                    `, [ board_no ])
+
+                    await connection.commit()
+                    res.json({ message: `좋아요 완료` })
+                            
+                } catch (e){
+                    await connection.rollback()
+                    next(e)
+                } finally {
+                    connection.release()
+                }
+            }
+
+
+        } catch (e){
+            next(e)
+        }
+    },
+    async myBoards(req, res, next){
+        try {
+            const user_no = req.users.user_no
+            const count = req.query.count
+            const page = req.query.page
+            const [ results ] = await pool.query(`
+            SELECT *
+            FROM boards
+            WHERE user_no = ?
+            AND enabled = 1
+            ORDER BY create_datetime DESC
+            LIMIT ? OFFSET ? 
+            `, [ user_no, Number(count), Number(page*count) ])
+
+            utils.formatting_datetime(results)
+
+            res.json(results)
+
+        } catch (e){
+
+        }
+    },
+    async bestOfBoards(req, res, next){
+        try {        
+            let category = req.query.category
+            const category_no = req.query.category_no
+
             let region_no = null
             let sector_no = null
-        
-            const page = req.query.page
-            const count = req.query.count
-            let category = req.query.category
 
             if (category === 'region'){
-                region_no = req.users.region_no
+                region_no = category_no
             } else if (category == 'sector') {
-                sector_no = req.users.sector_no
+                sector_no = category_no
             }
 
             const [ results ] = await pool.query(`
@@ -137,15 +241,78 @@ const controller = {
             WHERE region_no = ?
             OR sector_no = ?
             AND enabled = 1
-            LIMIT ? OFFSET ? 
-            `, [ region_no, sector_no, Number(count), Number(page*count) ])
+            ORDER BY likes DESC, views DESC
+            LIMIT 5; 
+            `, [ region_no, sector_no ])
+
+            utils.formatting_datetime(results)
 
             res.json({
-                code:200,
-                board_list: results
+                boards: results
             })
         }
         catch(e){
+            next(e)
+        }
+    },
+    async allOfBoards(req, res, next){
+        try {        
+            const page = req.query.page
+            const count = req.query.count
+            let category = req.query.category
+            const category_no = req.query.category_no
+            if(page === '' || count === undefined || category === null || category_no === null) next();
+
+            let region_no = null
+            let sector_no = null
+
+            if (category === 'region'){
+                region_no = category_no
+            } else if (category == 'sector') {
+                sector_no = category_no
+            }
+
+            const [ results ] = await pool.query(`
+            SELECT *
+            FROM boards
+            WHERE region_no = ?
+            OR sector_no = ?
+            AND enabled = 1
+            ORDER BY create_datetime DESC
+            LIMIT ? OFFSET ? 
+            `, [ region_no, sector_no, Number(count), Number(page*count) ])
+
+            utils.formatting_datetime(results)
+
+            res.json({
+                boards: results
+            })
+        }
+        catch(e){
+            next(e)
+        }
+    },
+    async searchedBoards(req, res, next) {
+        try {
+            const search = req.query.search
+            const page = req.query.page
+            const count = req.query.count
+
+            const [ results ] = await pool.query(`
+            SELECT *
+            FROM boards
+            WHERE title LIKE ?
+            OR content LIKE ?
+            AND enabled = 1
+            ORDER BY create_datetime DESC
+            LIMIT ? OFFSET ? 
+            `, [ `%${search}%`, `%${search}%`, Number(count), Number(page*count) ])
+
+            utils.formatting_datetime(results)
+
+            res.json(results)
+
+        } catch (e) {
             next(e)
         }
     }

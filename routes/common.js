@@ -1,19 +1,21 @@
-const express = require('express')
-const common = require('../controllers/common')
+const express = require('express');
+const router = express.Router();
+const { checkToken } = require('../middlewares/auth');
+const { upload } = require('../middlewares/upload');
+const common = require('../controllers/common');
 
-const router = express.Router()
+router.get('/ping', checkToken, common.ping);
 
-const { checkToken } = require('../middlewares/auth')
+router.post('/login', common.login); //로그인
+router.get('/user', checkToken, common.userInfo); //내 정보 조회
+router.put('/user/editpassword', checkToken, common.editPassword); //비밀번호 변경
+router.put('/user/editnickname', checkToken, common.editNickname); //닉네임 변경
 
-router.get('/', (req, res) => {
-	res.send('This is login&signUp')
-});
+router.post('/user', upload.single('img'), common.signUp); //회원가입
+router.get('/user/selectregion1', common.selectRegion1); //지역선택
+router.get('/user/selectregion2', common.selectRegion2); //지역선택
+router.get('/user/selectregion3', common.selectRegion3); //지역선택
+router.get('/user/selectregion4', common.selectRegion4); //지역선택
+router.get('/user/selectsectors', common.selectSectors); //지역선택
 
-router.get('/ping', checkToken, common.ping)
-router.get('/user', checkToken, common.userInfo) //내 정보 조회
-router.put('/user/editpassword', checkToken, common.editPassword) //비밀번호 변경
-router.put('/user/editnickname', checkToken, common.editNickname) //닉네임 변경
-router.post('/user', common.signUp) //회원가입
-router.post('/login', common.login) //로그인
-
-module.exports = router
+module.exports = router;

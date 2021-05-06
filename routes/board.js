@@ -9,6 +9,7 @@ const { checkToken } = require('../middlewares/auth')
 router.post('/', checkToken, board.createBoard)
 router.put('/', checkToken, board.editBoard)
 router.get('/list/all', checkToken, board.AllOfBoards)
+router.delete('/', checkToken, board.removeBoard)
 // router.post('/', checkToken, common.login);
 
 module.exports = router

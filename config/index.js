@@ -19,5 +19,5 @@ module.exports = {
             expiresIn: process.env.JWT_EXPIRESIN,
             issuer: process.env.JWT_ISSUER
         }
-    }
+    },
 }

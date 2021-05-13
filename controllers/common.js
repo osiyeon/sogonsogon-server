@@ -1,7 +1,6 @@
 const mysql = require('mysql2/promise');
 const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
-const {ReasonPhrases,StatusCodes,getReasonPhrase,getStatusCode } = require('http-status-codes')
 
 const utils = require('../utils');
 
@@ -40,7 +39,7 @@ const controller = {
         `,
         [email, nickname]
       );
-      if (result[0].count > 0) res.json({ message: '이미 존재하는 계정입니다.' });
+      if (result[0].count > 0) throw ({ success: `error`, result: {}, message: `이메일이나 닉네임이 이미 존재합니다.`});
       else {
         const connection = await pool.getConnection(async (conn) => conn);
         try {
@@ -55,19 +54,9 @@ const controller = {
             [email, password, nickname, region_no, sector_no, image]
           );
           await connection.commit();
-
-          res.status(200).json({ message: `회원가입이 정상적으로 이루어졌습니다.`})
-          // res.json({
-          //   code: 200,
-          //   success: '회원가입이 정상적으로 이루어졌습니다.',
-          // });
+          next({success: `ok`, result: {}, message: `회원가입이 정상적으로 이루어졌습니다.`})
         } catch (e) {
           await connection.rollback();
-          // res
-          //   .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          //   .send({
-          //     error: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR)
-          //   })
           next(e);
         } finally {
           connection.release();
@@ -90,19 +79,14 @@ const controller = {
       `,
         [email, password]
       );
-      if (results.length > 0) {
-        const user_no = results[0].no
-        const email = results[0].email
-        const region_no = results[0].region_no
-        const sector_no = results[0].sector_no
-        const token = utils.sign({ user_no, email })
-        res.json({
-          token: token,
-          region_no: region_no,
-          sector_no: sector_no
-        })
-      } else {
-        res.status(200).json({ message: '이메일 또는 비밀번호가 일치하지 않습니다.'})
+      if (results.length < 1) throw ({ success: `error`, result: {}, message: `이메일 또는 비밀번호가 일치하지 않습니다.`});
+      else{
+        const user_no = results[0].no;
+        const email = results[0].email;
+        const region_no = results[0].region_no;
+        const sector_no = results[0].sector_no;
+        const token = utils.sign({ user_no, email, region_no, sector_no });
+        next({success: `ok`, result: {token}, message: `로그인이 정상적으로 이루어졌습니다.`})
       }
     } catch (e) {
       next(e);
@@ -121,12 +105,7 @@ const controller = {
       `,
         [user_no]
       );
-      if (results.length < 1) res.json({ message: '등록된 계정이 아닙니다.' });
-      else {
-        res.json({
-          ...results[0],
-        });
-      }
+        next({success: `ok`, result: {...results[0]}})
     } catch (e) {
       next(e);
     }
@@ -145,7 +124,7 @@ const controller = {
       `,
         [nickname]
       );
-      if (result[0].count > 0) res.json({ message: `이미 존재하는 닉네임입니다.` });
+      if (result[0].count > 0) throw ({ success: `error`, result: {}, message: `이미 존재하는 닉네임입니다.`});
       else {
         const connection = await pool.getConnection(async (conn) => conn);
         try {
@@ -161,9 +140,7 @@ const controller = {
             [nickname, user_no]
           );
           await connection.commit();
-          res.json({
-            message: '닉네임이 변경되었습니다',
-          });
+          next({success: `ok`, result: {}, message: `닉네임이 변경되었습니다.`})
         } catch (e) {
           await connection.rollback();
           next(e);
@@ -193,9 +170,7 @@ const controller = {
           [editpassword, user_no]
         );
         await connection.commit();
-        res.json({
-          message: '비밀번호가 변경되었습니다',
-        });
+        next({success: `ok`, result: {}, message: `비밀번호가 변경되었습니다.`})
       } catch (e) {
         await connection.rollback();
         next(e);
@@ -212,9 +187,8 @@ const controller = {
           SELECT bname
           FROM region_1
       ;`)
-      res.json({
-        region_list1: result
-      })
+      next({success: `ok`,result: { result }})
+
     }catch(e){
       next(e);
     }
@@ -227,9 +201,7 @@ const controller = {
           FROM region_2
           WHERE region_1_no = ?
       ;`,[region_1_no])
-      res.json({
-        region_list2:result
-      })
+      next({success: `ok`,result: { result }})
     }catch(e){
       next(e);
     }
@@ -242,9 +214,7 @@ const controller = {
           FROM region_3
           WHERE region_2_no = ?
       ;`,[region_2_no])
-      res.json({
-        region_list3: result
-      })
+      next({success: `ok`,result: { result }})
     }catch(e){
       next(e);
     }
@@ -257,9 +227,7 @@ const controller = {
           FROM region_4
           WHERE region_3_no = ?
       ;`,[region_3_no])
-      res.json({
-        region_list4: result
-      })
+      next({success: `ok`,result: { result }})
     }catch(e){
       next(e);
     }
@@ -270,9 +238,7 @@ const controller = {
           SELECT sector_name
           FROM sectors
       ;`)
-      res.json({
-        sector_list: result
-      })
+      next({success: `ok`,result: { result }})
     }catch(e){
       next(e);
     }

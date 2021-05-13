@@ -1,7 +1,6 @@
 const mysql = require('mysql2/promise')
 const dbconfig = require('../config/index').mysql
 const pool = mysql.createPool(dbconfig)
-
 const utils = require('../utils')
 
 const controller = {
@@ -10,16 +9,16 @@ const controller = {
       const user_no = req.users.user_no
       const board_no = req.query.board_no
       const text = req.body.text
-      const [result] = await pool.query(
-        `
-            SELECT *
-            FROM users
-            WHERE no = ?
-            AND enabled = 1
-            `,
-        [user_no]
-      )
+      const [ result1 ] = await pool.query(`
+          SELECT
+          COUNT(*) AS 'count'
+          FROM comments
+          WHERE enabled = 1
+          AND board_no = ?
+      `,[board_no, user_no])
 
+      if (result1[0].count > 1) throw ({ success: `error`, result: {}, message: `댓글이 이미 존재합니다.`});
+      
       const connection = await pool.getConnection(async (conn) => conn)
       try {
         await connection.beginTransaction()
@@ -32,7 +31,7 @@ const controller = {
           [user_no, board_no, text]
         )
         await connection.commit()
-        res.status(200).json({ message: '댓글이 정상적으로 등록되었습니다.'})
+        next({success: `ok`, result: {}, message: '댓글이 정상적으로 등록되었습니다.'})
       } catch (e) {
         await connection.rollback()
         next(e)
@@ -43,7 +42,7 @@ const controller = {
       next(e)
     }
   },
-  async AllOfComments(req, res, next) {
+  async allOfComments(req, res, next) {
     try {
       const user_no = req.users.user_no
       const board_no = req.query.board_no
@@ -61,7 +60,7 @@ const controller = {
         `,
         [user_no, board_no, Number(count), Number(page * count)]
       )
-      res.status(200).json({comment_list: results})
+      next({success: `ok`, result: {results}, message: '댓글이 정상적으로 등록되었습니다.'})
     } catch (e) {
       next(e)
     }
@@ -80,7 +79,7 @@ const controller = {
           AND no = ?;
       `,[board_no, comment_no])
 
-      if(result1[0].count < 1) res.json({ message: '댓글이 존재하지 않습니다.' })
+      if (result1[0].count < 1) throw ({ success: `error`, result: {}, message: `댓글이 존재하지 않습니다.`});
 
       const connection = await pool.getConnection(async conn => conn)
       try{
@@ -95,9 +94,7 @@ const controller = {
             AND no = ?
         `,[board_no, comment_no])
         await connection.commit()
-        res.json({
-          message: '댓글이 정상적으로 삭제되었습니다.'
-        })
+        next({success: `ok`, result: {}, message: '댓글이 정상적으로 삭제되었습니다.'})
       }catch(e){
         await connection.rollback()
         next(e)

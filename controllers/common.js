@@ -262,8 +262,7 @@ const controller = {
       WHERE no = ?;
       `, [ sector_no ])
 
-      res.status(200).json({ ...region[0], ...sector[0] })
-
+      next({success: `ok`,result: { ...region[0], ...sector[0] }})
 
     } catch (e) {
       next(e)

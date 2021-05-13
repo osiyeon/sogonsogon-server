@@ -1,7 +1,18 @@
-INSERT INTO `sogonsogon`.`region_1` (`no`, `bcode`, `bname`) VALUES ('1', '11', '서울특별시'); 
+INSERT INTO `sogonsogon`.`region_1` (`no`, `bcode`, `bname`) VALUES (1, '11', '서울특별시');
 
-INSERT INTO `sogonsogon`.`region_2` (`no`, `bcode`, `bname`,`region_1_no`) VALUES ('1', '110', '종로구','1'),('2', '140', '중구','1'),('3', '170', '용산구','1'),('4', '200', '성동구','1'),('5', '215', '광진구','1'); 
+INSERT INTO `sogonsogon`.`region_2` (`no`, `bcode`, `bname`,`region_1_no`) VALUES (1, '11110', '종로구', 1),(2, '11140', '중구',1),(3, '11170', '용산구',1),(4, '11200', '성동구',1),(5, '11215', '광진구',1);
 
-INSERT INTO `sogonsogon`.`region_3` (`no`, `bcode`, `bname`,`region_2_no`) VALUES ('1', '101', '청운동','1'),('2', '102', '신교동','1'),('3', '103', '궁정동','1'),('4', '104', '효자동','1'),('5', '105', '창성동','1'); 
+INSERT INTO `sogonsogon`.`region_3` (`no`, `bcode`, `bname`,`region_2_no`) VALUES (1, '11110101', '청운동', 1),(2, '11110102', '신교동', 1),(3, '11110103', '궁정동', 1),(4, '11110104', '효자동', 1),(5, '11110105', '창성동', 1);
+INSERT INTO `sogonsogon`.`region_3` (`bcode`, `bname`,`region_2_no`) VALUES ('11140101', '무교동', 2),('11140102', '다동', 2),('11140103', '태평로1가', 2),('11140104', '을지로1가', 2),('11140105', '을지로2가', 2);
+INSERT INTO `sogonsogon`.`region_3` (`bcode`, `bname`,`region_2_no`) VALUES ('11170101', '후암동', 3),('11170102', '용산동2가', 3),('11170103', '용산동4가', 3),('11170104', '갈월동', 3),('11170105', '남영동', 3);
+INSERT INTO `sogonsogon`.`region_3` (`bcode`, `bname`,`region_2_no`) VALUES ('11200101', '상왕십리동', 4),('11200102', '하왕십리동', 4),('11200103', '홍익동', 4),('11200104', '도선동', 4),('11200105', '남영동', 4);
+INSERT INTO `sogonsogon`.`region_3` (`bcode`, `bname`,`region_2_no`) VALUES ('11215101', '중곡동', 5),('11215102', '능동', 5),('11215103', '구의동', 5),('11215104', '광장동', 5),('11215105', '자양동', 5);
 
-INSERT INTO `sogonsogon`.`region_4` (`no`, `bcode`,`region_3_no`) VALUES ('1', '00', '1');
+
+INSERT INTO `sogonsogon`.`region_4` (`no`, `bcode`, `bname`,`region_3_no`) VALUES (1, '1111010100', '', 1),(2, '1111010200', '', 2),(3, '1111010300', '', 3),(4, '1111010400', '', 4),(5, '1111010500', '', 5);
+INSERT INTO `sogonsogon`.`region_4` (`bcode`, `bname`,`region_3_no`) VALUES ('1114010100', '', 6),('1114010200', '', 7),('1114010300', '', 8),('1114010400', '', 9),('1114010500', '', 10);
+INSERT INTO `sogonsogon`.`region_4` (`bcode`, `bname`,`region_3_no`) VALUES ('1117010100', '', 11),('1117010200', '', 12),('1117010300', '', 13),('1117010400', '', 14),('1117010500', '', 15);
+INSERT INTO `sogonsogon`.`region_4` (`bcode`, `bname`,`region_3_no`) VALUES ('1120010100', '', 16),('1120010200', '', 17),('1120010300', '', 18),('1120010400', '', 19),('1120010500', '', 20);
+INSERT INTO `sogonsogon`.`region_4` (`bcode`, `bname`,`region_3_no`) VALUES ('1121510100', '', 21),('1121510200', '', 22),('1121510300', '', 23),('1121510400', '', 24),('1121510500', '', 25);
+
+INSERT INTO `sogonsogon`.`sectors` (`no`,`sector_name`) VALUES (1, '일반음식점'),(2,'카페/제과점'),(3,'헤어/피부/미용'),(4,'슈퍼/편의점'),(5,'의료업');

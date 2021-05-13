@@ -24,8 +24,8 @@ DROP TABLE IF EXISTS `users`;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `users` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `region_no` VARCHAR(11) NOT NULL DEFAULT '',
-  `sector_no` VARCHAR(11) NOT NULL DEFAULT '',
+  `region_bcode` VARCHAR(11) NOT NULL DEFAULT '',
+  `sector_no` INT(11) UNSIGNED DEFAULT NULL,
   `email` VARCHAR(320) NOT NULL DEFAULT '',
   `password` CHAR(41) NOT NULL DEFAULT '',
   `nickname` VARCHAR(40) NOT NULL DEFAULT '',
@@ -44,8 +44,8 @@ DROP TABLE IF EXISTS `boards`;
 CREATE TABLE IF NOT EXISTS .`boards` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_no` INT(11) UNSIGNED NOT NULL,
-  `region_no` VARCHAR(11) DEFAULT NULL,
-  `sector_no` VARCHAR(11) DEFAULT NULL,
+  `region_bcode` VARCHAR(11) DEFAULT NULL,
+  `sector_no` INT(11) UNSIGNED DEFAULT NULL,
   `title` VARCHAR(100) NOT NULL DEFAULT '',
   `content` TEXT NOT NULL,
   `views` INT(11) UNSIGNED NOT NULL DEFAULT '0',
@@ -64,7 +64,7 @@ DROP TABLE IF EXISTS `comments`;
 CREATE TABLE IF NOT EXISTS `comments` (
   `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_no` INT(11) UNSIGNED NOT NULL,
-  `post_no` INT(11) UNSIGNED NOT NULL,
+  `board_no` INT(11) UNSIGNED NOT NULL,
   `text` TEXT NOT NULL,
   `create_datetime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `remove_datetime` DATETIME DEFAULT NULL,

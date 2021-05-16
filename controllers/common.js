@@ -106,7 +106,7 @@ const controller = {
       `,
         [user_no]
       );
-      next(...results[0])
+      next(results[0])
     } catch (e) {
       next(e);
     }

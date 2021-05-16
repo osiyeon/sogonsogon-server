@@ -1,14 +1,15 @@
 const mysql = require('mysql2/promise')
 const dbconfig = require('../config/index').mysql
-const pool = mysql.createPool(dbconfig)
-const utils = require('../utils')
+const pool = mysql.createPool(dbconfig);
+const { formatting_datetime, param } = require('../utils')
 
 const controller = {
   async createComment(req, res, next) {
     try {
+      const body = req.body
       const user_no = req.users.user_no
-      const board_no = req.query.board_no
-      const text = req.body.text
+      const board_no = param(body, 'board_no')
+      const text = param(body, 'text')
 
       const connection = await pool.getConnection(async (conn) => conn)
       try {
@@ -35,10 +36,12 @@ const controller = {
   },
   async allOfComments(req, res, next) {
     try {
+      const query = req.query
+
       const user_no = req.users.user_no
-      const board_no = req.query.board_no
-      const page = req.query.page
-      const count = req.query.count
+      const board_no = param(query, 'board_no')
+      const page = param(query, 'page')
+      const count = param(query, 'count')
 
       const [results] = await pool.query(
         `
@@ -52,6 +55,23 @@ const controller = {
 
       if (results.length < 1) throw Error(`해당 게시글이 존재하지 않습니다.`)
       else {
+        // const [results1] = await pool.query(
+        //   `
+        //   SELECT COUNT(*) AS 'counts'
+        //   FROM comments 
+        //   WHERE board_no = ? 
+        //   AND enabled = 1;
+        //   SELECT c.*, u.nickname
+        //   FROM comments c
+        //   INNER JOIN users u
+        //   ON u.no = c.user_no
+        //   WHERE c.board_no = ?
+        //   AND u.enabled = 1
+        //   AND c.enabled = 1
+        //   LIMIT ? OFFSET ?;
+        //   `,
+        //   [board_no, board_no, Number(count), Number(page * count)]
+        // )
         const [results1] = await pool.query(
           `
           SELECT c.*, u.nickname
@@ -61,12 +81,14 @@ const controller = {
           WHERE c.board_no = ?
           AND u.enabled = 1
           AND c.enabled = 1
-          LIMIT ? OFFSET ? 
+          LIMIT ? OFFSET ?;
           `,
           [board_no, Number(count), Number(page * count)]
         )
+
         results1.map((result) => result.is_mine = user_no === result.user_no ? true : false)
-        utils.formatting_datetime(results1)
+
+        formatting_datetime(results1)
         next({ comments: results1 })
       }
     } catch (e) {

@@ -6,8 +6,6 @@ const json = {
     res.status(404).json({ code: '404', message: '해당 API가 존재하지 않습니다.' });
   },
   async result(data, req, res, next) {
-    console.log("data: ", data);
-
     if (data instanceof Error) {
       res.status(400).json({ message: data.message })
     } else if (data === `unauthorized_error`) {

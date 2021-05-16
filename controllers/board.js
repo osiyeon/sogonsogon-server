@@ -1,17 +1,20 @@
 const mysql = require('mysql2/promise');
 const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
+// const param = require('../utils/')
 
-const utils = require('../utils');
+const { formatting_datetime, param } = require('../utils');
 
 const controller = {
     async createBoard(req, res, next) {
         try {
+            const body = req.body
             const user_no = req.users.user_no;
-            const title = req.body.title;
-            const content = req.body.content;
-            const category = req.body.category;
-            const category_no = req.body.category_no;
+            const title = param(body, 'title')
+            const content = param(body, 'content')
+            const category = param(body, 'category')
+            const category_no = param(req.body, 'category_no')
+
 
             let region_no = null;
             let sector_no = null;
@@ -31,7 +34,7 @@ const controller = {
                     [user_no, title, content, region_no, sector_no]
                 );
                 await connection.commit();
-                next({ success: `ok`, result: {}, message: `게시글이 정상적으로 등록되었습니다.` })
+                next({ message: `게시글이 정상적으로 등록되었습니다.` })
             } catch (e) {
                 await connection.rollback();
                 next(e);
@@ -44,11 +47,12 @@ const controller = {
     },
     async editBoard(req, res, next) {
         try {
-            const board_no = req.body.board_no;
-            const title = req.body.title;
-            const content = req.body.content;
-            const category = req.body.category;
-            const category_no = req.body.category_no;
+            const body = req.body
+            const board_no = prarm(body, 'board_no')
+            const title = param(body, 'title')
+            const content = param(body, 'content')
+            const category = param(body, 'categort')
+            const category_no = param(body, 'category_no')
 
             const [result] = await pool.query(
                 `
@@ -99,8 +103,9 @@ const controller = {
     },
     async removeBoard(req, res, next) {
         try {
+            const query = req.query
             const user_no = req.users.user_no;
-            const board_no = req.query.board_no;
+            const board_no = param(query, 'board_no')
 
             const [result1] = await pool.query(
                 `
@@ -113,18 +118,8 @@ const controller = {
             `,
                 [user_no, board_no]
             );
-            // const [result2] = await pool.query(
-            //     `
-            //     SELECT
-            //     COUNT(*) AS 'count'
-            //     FROM comments
-            //     WHERE enabled = 1
-            //     AND board_no = ?
-            //     `,
-            //     [board_no]
-            // );
-            if (result1[0].count < 1) throw Error(`해당 게시글이 존재하지 않거나 해당 게시글 삭제 권한이 없습니다.`);
 
+            if (result1[0].count < 1) throw Error(`해당 게시글이 존재하지 않거나 해당 게시글 삭제 권한이 없습니다.`);
             const connection = await pool.getConnection(async (conn) => conn);
             try {
                 await connection.beginTransaction();
@@ -144,39 +139,6 @@ const controller = {
                 await connection.commit();
                 next({ message: `게시글이 정상적으로 삭제되었습니다.` })
 
-
-                //     if (result2[0].count < 1) {
-                //         await connection.query(
-                //             `
-                // UPDATE boards
-                // SET
-                // remove_datetime = NOW(),
-                // enabled = 0
-                // where no = ?
-                // `,
-                //             [board_no]
-                //         );
-                //         await connection.commit();
-                //         next({ success: `ok`, result: {}, message: `게시글이 정상적으로 삭제되었습니다.` })
-                //     } else {
-                //         await connection.query(
-                //             `
-                //     UPDATE boards t1
-                //     RIGHT JOIN comments t2 
-                //     ON (t2.board_no = t1.no)
-                //     SET
-                //     t1.remove_datetime = NOW(),
-                //     t2.remove_datetime = NOW(),
-                //     t1.enabled = 0,
-                //     t2.enabled = 0
-                //     WHERE t1.no = ?
-                //     AND t1.user_no = ?
-                // `,
-                //             [board_no, user_no]
-                //         );
-                //         await connection.commit();
-                //         next({ success: `ok`, result: {}, message: `게시글이 정상적으로 삭제되었습니다.` })
-                //     }
             } catch (e) {
                 await connection.rollback();
                 next(e);
@@ -189,8 +151,10 @@ const controller = {
     },
     async board(req, res, next) {
         try {
-            const user_no = req.users.user_no;
-            const board_no = req.query.board_no;
+            const query = req.query
+
+            const user_no = req.users.user_no
+            const board_no = param(query, 'board_no')
 
             const [results] = await pool.query(
                 `
@@ -239,7 +203,7 @@ const controller = {
                         [board_no]
                     ); // 조회수 수정
 
-                    utils.formatting_datetime(results);
+                    formatting_datetime(results);
 
                     await connection.commit();
                     next({ is_mine, ...results[0] })
@@ -259,7 +223,10 @@ const controller = {
     },
     async like(req, res, next) {
         try {
-            const board_no = req.query.board_no;
+            const query = req.query
+
+            const board_no = param(query, 'board_no')
+
             const [result] = await pool.query(
                 `
             SELECT *
@@ -300,9 +267,11 @@ const controller = {
     },
     async myBoards(req, res, next) {
         try {
-            const user_no = req.users.user_no;
-            const count = req.query.count;
-            const page = req.query.page;
+            const query = req.query
+
+            const user_no = req.users.user_no
+            const count = param(query, 'count')
+            const page = param(query, 'page')
 
             const [results] = await pool.query(
                 `
@@ -342,7 +311,7 @@ const controller = {
             );
 
             results1.map((result) => result.comments = result.comments === null ? 0 : result.comments)
-            utils.formatting_datetime(results1);
+            formatting_datetime(results1);
 
             next({ ...results[0], results1 })
         } catch (e) {
@@ -351,8 +320,9 @@ const controller = {
     },
     async bestOfBoards(req, res, next) {
         try {
-            let category = req.query.category;
-            const category_no = req.query.category_no;
+            const query = req.query
+            let category = param(query, 'category')
+            const category_no = param(query, 'category_no')
 
             let region_no = null;
             let sector_no = null;
@@ -394,7 +364,7 @@ const controller = {
             );
 
             results.map((result) => result.comments = result.comments === null ? 0 : result.comments)
-            utils.formatting_datetime(results);
+            formatting_datetime(results);
 
             next({ results })
         } catch (e) {
@@ -403,11 +373,12 @@ const controller = {
     },
     async allOfBoards(req, res, next) {
         try {
-            const page = req.query.page;
-            const count = req.query.count;
-            let category = req.query.category;
-            const category_no = req.query.category_no;
-            if (page === '' || count === undefined || category === null || category_no === null) next();
+            const body = req.query
+
+            const page = param(body, 'page')
+            const count = param(body, 'count')
+            let category = param(body, 'category')
+            const category_no = param(body, 'category_no')
 
             let region_no = null;
             let sector_no = null;
@@ -459,7 +430,7 @@ const controller = {
             );
 
             results.map((result) => result.comments = result.comments === null ? 0 : result.comments)
-            utils.formatting_datetime(results);
+            formatting_datetime(results);
 
             next({ ...result[0], results })
         } catch (e) {
@@ -468,9 +439,10 @@ const controller = {
     },
     async searchedBoards(req, res, next) {
         try {
-            const search = req.query.search;
-            const page = req.query.page;
-            const count = req.query.count;
+            const query = req.query
+            const search = param(query, 'search')
+            const page = param(query, 'page')
+            const count = param(query, 'count')
 
             const [results] = await pool.query(
                 `
@@ -507,7 +479,7 @@ const controller = {
             );
 
             results.map((result) => result.comments = result.comments === null ? 0 : result.comments)
-            utils.formatting_datetime(results);
+            formatting_datetime(results);
             next({ results })
         } catch (e) {
             next(e);

@@ -40,4 +40,14 @@ module.exports = {
         })
         return results
     },
+    param(data, key) {
+        if (Object.keys(data).length === 0) throw Error(`파라미터 없음`)
+        else {
+            if (data[key] === undefined) {
+                throw Error(`해당 파라미터( ${key} )가 없습니다. 입력해주세요`)
+            } else {
+                return data[key]
+            }
+        }
+    }
 }

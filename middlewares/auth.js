@@ -7,12 +7,12 @@ const { json } = require('../middlewares/result');
 module.exports = {
   async checkToken(req, res, next) {
     try {
-      if (req.headers.authorization === undefined) throw ({ result: 'Unauthorized_error' });
+      if (req.headers.authorization === undefined) throw Error('Unauthorized_error');
       const bearer_token = req.headers.authorization;
       const array = bearer_token.split(' ');
       const token = array[1];
       const verified = auth.verify(token);
-      if(verified === null) throw ({ result: 'Unauthorized_error' });
+      if (verified === null) next(`unauthorized_error`);
       const user_no = verified.user_no;
       const email = verified.email;
       // const region_no = verified.region_no
@@ -33,7 +33,7 @@ module.exports = {
       req.users = { user_no, email };
       next();
     } catch (e) {
-        next(e);
+      next(e);
     }
   },
 };

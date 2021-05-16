@@ -3,7 +3,11 @@ const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
 // const param = require('../utils/')
 
+<<<<<<< HEAD
 const { formatting_datetime, param } = require('../utils');
+=======
+const {formatting_datetime, param, error} = require('../utils');
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
 
 const controller = {
     async createBoard(req, res, next) {
@@ -14,7 +18,10 @@ const controller = {
             const content = param(body, 'content')
             const category = param(body, 'category')
             const category_no = param(req.body, 'category_no')
+<<<<<<< HEAD
 
+=======
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
 
             let region_no = null;
             let sector_no = null;
@@ -48,10 +55,17 @@ const controller = {
     async editBoard(req, res, next) {
         try {
             const body = req.body
+<<<<<<< HEAD
             const board_no = prarm(body, 'board_no')
             const title = param(body, 'title')
             const content = param(body, 'content')
             const category = param(body, 'categort')
+=======
+            const board_no = param(body, 'board_no')
+            const title = param(body, 'title')
+            const content = param(body, 'content')
+            const category = param(body, 'category')
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             const category_no = param(body, 'category_no')
 
             const [result] = await pool.query(
@@ -63,16 +77,16 @@ const controller = {
             `,
                 [board_no]
             );
-            if (result.length < 1) throw ({ success: `error`, result: {}, message: `게시글이 존재하지 않습니다.` });
+            if (result.length < 1) throw error(`게시글이 존재하지 않습니다.`);
             else {
                 const connection = await pool.getConnection(async (conn) => conn);
                 try {
                     await connection.beginTransaction();
 
-                    let region_no = null;
+                    let region_bcode = null;
                     let sector_no = null;
 
-                    if (category === 'region') region_no = category_no;
+                    if (category === 'region') region_bcode = category_no;
                     else if (category == 'sector') sector_no = category_no;
 
                     await connection.query(
@@ -86,10 +100,10 @@ const controller = {
                     WHERE no = ?
                     AND enabled = 1;
                     `,
-                        [title, content, region_no, sector_no, board_no]
+                        [title, content, region_bcode, sector_no, board_no]
                     );
                     await connection.commit();
-                    next({ success: `ok`, result: {}, message: `게시글이 정상적으로 변경되었습니다` })
+                    next({message: `게시글이 정상적으로 변경되었습니다.`})
                 } catch (e) {
                     await connection.rollback();
                     next(e);
@@ -102,7 +116,11 @@ const controller = {
         }
     },
     async removeBoard(req, res, next) {
+<<<<<<< HEAD
         try {
+=======
+        try {   
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             const query = req.query
             const user_no = req.users.user_no;
             const board_no = param(query, 'board_no')
@@ -118,6 +136,10 @@ const controller = {
             `,
                 [user_no, board_no]
             );
+<<<<<<< HEAD
+=======
+            if (result1[0].count < 1) throw error(`해당 게시글이 존재하지 않거나 해당 게시글 삭제 권한이 없습니다.`);
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
 
             if (result1[0].count < 1) throw Error(`해당 게시글이 존재하지 않거나 해당 게시글 삭제 권한이 없습니다.`);
             const connection = await pool.getConnection(async (conn) => conn);
@@ -138,7 +160,10 @@ const controller = {
 
                 await connection.commit();
                 next({ message: `게시글이 정상적으로 삭제되었습니다.` })
+<<<<<<< HEAD
 
+=======
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             } catch (e) {
                 await connection.rollback();
                 next(e);
@@ -151,9 +176,14 @@ const controller = {
     },
     async board(req, res, next) {
         try {
+<<<<<<< HEAD
             const query = req.query
 
             const user_no = req.users.user_no
+=======
+            const query = req.quer
+            const user_no = req.users.user_no;
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             const board_no = param(query, 'board_no')
 
             const [results] = await pool.query(
@@ -183,8 +213,7 @@ const controller = {
                     `,
                 [board_no, board_no]
             );
-            // if (results.length < 1) throw ({ success: `error`, message: `게시글이 존재하지 않습니다.` })
-            if (results.length < 1) throw Error(`해당 게시글이 존재하지 않습니다.`)
+            if (results.length < 1) throw error(`해당 게시글이 존재하지 않습니다.`)
             else {
                 const is_mine = user_no === results[0].user_no ? true : false;
                 results[0].comments = results[0].comments === null ? 0 : results[0].comments
@@ -204,10 +233,12 @@ const controller = {
                     ); // 조회수 수정
 
                     formatting_datetime(results);
+<<<<<<< HEAD
 
+=======
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
                     await connection.commit();
                     next({ is_mine, ...results[0] })
-                    // next({ success: `ok`, result: { is_mine, ...results[0], comments } })
                 } catch (e) {
                     await connection.rollback();
                     //throw e
@@ -224,9 +255,13 @@ const controller = {
     async like(req, res, next) {
         try {
             const query = req.query
+<<<<<<< HEAD
 
             const board_no = param(query, 'board_no')
 
+=======
+            const board_no = param(query, 'board_no')
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             const [result] = await pool.query(
                 `
             SELECT *
@@ -236,7 +271,7 @@ const controller = {
             `,
                 [board_no]
             );
-            if (result.length < 1) throw ({ success: `error`, result: {}, message: `게시글이 존재하지 않습니다.` });
+            if (result.length < 1) throw error(`게시글이 존재하지 않습니다.`);
             else {
                 const connection = await pool.getConnection(async (conn) => conn);
                 try {
@@ -253,7 +288,7 @@ const controller = {
                     );
 
                     await connection.commit();
-                    next({ success: `ok`, result: {}, message: `좋아요 완료` })
+                    next({ message: `좋아요 완료` })
                 } catch (e) {
                     await connection.rollback();
                     next(e);
@@ -268,7 +303,10 @@ const controller = {
     async myBoards(req, res, next) {
         try {
             const query = req.query
+<<<<<<< HEAD
 
+=======
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             const user_no = req.users.user_no
             const count = param(query, 'count')
             const page = param(query, 'page')
@@ -309,7 +347,6 @@ const controller = {
                 LIMIT ? OFFSET ?
             `, [user_no, Number(count), Number(page * count)]
             );
-
             results1.map((result) => result.comments = result.comments === null ? 0 : result.comments)
             formatting_datetime(results1);
 
@@ -374,7 +411,10 @@ const controller = {
     async allOfBoards(req, res, next) {
         try {
             const body = req.query
+<<<<<<< HEAD
 
+=======
+>>>>>>> bf73117efe3c566c9f3fdf287aba4fed094cc851
             const page = param(body, 'page')
             const count = param(body, 'count')
             let category = param(body, 'category')

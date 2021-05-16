@@ -1,7 +1,6 @@
 const mysql = require('mysql2/promise');
 const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
-
 const utils = require('../utils');
 
 const controller = {
@@ -39,7 +38,7 @@ const controller = {
         `,
         [email, nickname]
       );
-      if (result[0].count > 0) throw Error(`이메일이나 닉네임이 이미 존재합니다.`);
+      if (result[0].count > 0) throw utils.error(`이메일이나 닉네임이 이미 존재합니다.`);
       else {
         const connection = await pool.getConnection(async (conn) => conn);
         try {
@@ -79,8 +78,7 @@ const controller = {
       `,
         [email, password]
       );
-      // if (results.length < 1) throw ({ success: `error`, message: `이메일 또는 비밀번호가 일치하지 않습니다.`});
-      if (results.length < 1) throw Error(`이메일 또는 비밀번호가 일치하지 않습니다.`)
+      if (results.length < 1) throw utils.error(`이메일 또는 비밀번호가 일치하지 않습니다.`)
       else {
         const user_no = results[0].no;
         const email = results[0].email;
@@ -125,8 +123,7 @@ const controller = {
       `,
         [nickname]
       );
-      // if (result[0].count > 0) throw ({ success: `error`, result: {}, message: `이미 존재하는 닉네임입니다.` });
-      if (result[0].count > 0) throw Error(`이미 존재하는 닉네임입니다.`);
+      if (result[0].count > 0) throw utils.error(`이미 존재하는 닉네임입니다.`);
       else {
         const connection = await pool.getConnection(async (conn) => conn);
         try {
@@ -172,7 +169,7 @@ const controller = {
           [editpassword, user_no]
         );
         await connection.commit();
-        next({ success: `ok`, result: {}, message: `비밀번호가 변경되었습니다.` })
+        next({ message: `비밀번호가 변경되었습니다.` })
       } catch (e) {
         await connection.rollback();
         next(e);
@@ -189,7 +186,7 @@ const controller = {
           SELECT *
           FROM region_1
       ;`)
-      next({ success: `ok`, result: result })
+      next({ result })
 
     } catch (e) {
       next(e);
@@ -203,7 +200,7 @@ const controller = {
           FROM region_2
           WHERE region_1_no = ?
       ;`, [region_1_no])
-      next({ success: `ok`, result: result })
+      next({ result })
     } catch (e) {
       next(e);
     }
@@ -216,7 +213,7 @@ const controller = {
           FROM region_3
           WHERE region_2_no = ?
       ;`, [region_2_no])
-      next({ success: `ok`, result: result })
+      next({ result })
     } catch (e) {
       next(e);
     }
@@ -229,7 +226,7 @@ const controller = {
           FROM region_4
           WHERE region_3_no = ?
       ;`, [region_3_no])
-      next({ success: `ok`, result: result })
+      next({ result })
     } catch (e) {
       next(e);
     }
@@ -240,7 +237,7 @@ const controller = {
           SELECT *
           FROM sectors
       ;`)
-      next({ success: `ok`, result: result })
+      next({ result })
     } catch (e) {
       next(e)
     }

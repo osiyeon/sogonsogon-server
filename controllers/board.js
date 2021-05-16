@@ -31,7 +31,7 @@ const controller = {
                     [user_no, title, content, region_no, sector_no]
                 );
                 await connection.commit();
-                next({ success: `ok`, result: {}, message: `게시글이 정상적으로 등록되었습니다.` })
+                next({ message: `게시글이 정상적으로 등록되었습니다.` })
             } catch (e) {
                 await connection.rollback();
                 next(e);
@@ -59,7 +59,7 @@ const controller = {
             `,
                 [board_no]
             );
-            if (result.length < 1) throw ({ success: `error`, result: {}, message: `게시글이 존재하지 않습니다.` });
+            if (result.length < 1) throw utils.error(`게시글이 존재하지 않습니다.`);
             else {
                 const connection = await pool.getConnection(async (conn) => conn);
                 try {
@@ -85,7 +85,7 @@ const controller = {
                         [title, content, region_no, sector_no, board_no]
                     );
                     await connection.commit();
-                    next({ success: `ok`, result: {}, message: `게시글이 정상적으로 변경되었습니다` })
+                    next({message: `게시글이 정상적으로 변경되었습니다`})
                 } catch (e) {
                     await connection.rollback();
                     next(e);
@@ -113,17 +113,7 @@ const controller = {
             `,
                 [user_no, board_no]
             );
-            // const [result2] = await pool.query(
-            //     `
-            //     SELECT
-            //     COUNT(*) AS 'count'
-            //     FROM comments
-            //     WHERE enabled = 1
-            //     AND board_no = ?
-            //     `,
-            //     [board_no]
-            // );
-            if (result1[0].count < 1) throw Error(`해당 게시글이 존재하지 않거나 해당 게시글 삭제 권한이 없습니다.`);
+            if (result1[0].count < 1) throw utils.error(`해당 게시글이 존재하지 않거나 해당 게시글 삭제 권한이 없습니다.`);
 
             const connection = await pool.getConnection(async (conn) => conn);
             try {
@@ -143,40 +133,6 @@ const controller = {
 
                 await connection.commit();
                 next({ message: `게시글이 정상적으로 삭제되었습니다.` })
-
-
-                //     if (result2[0].count < 1) {
-                //         await connection.query(
-                //             `
-                // UPDATE boards
-                // SET
-                // remove_datetime = NOW(),
-                // enabled = 0
-                // where no = ?
-                // `,
-                //             [board_no]
-                //         );
-                //         await connection.commit();
-                //         next({ success: `ok`, result: {}, message: `게시글이 정상적으로 삭제되었습니다.` })
-                //     } else {
-                //         await connection.query(
-                //             `
-                //     UPDATE boards t1
-                //     RIGHT JOIN comments t2 
-                //     ON (t2.board_no = t1.no)
-                //     SET
-                //     t1.remove_datetime = NOW(),
-                //     t2.remove_datetime = NOW(),
-                //     t1.enabled = 0,
-                //     t2.enabled = 0
-                //     WHERE t1.no = ?
-                //     AND t1.user_no = ?
-                // `,
-                //             [board_no, user_no]
-                //         );
-                //         await connection.commit();
-                //         next({ success: `ok`, result: {}, message: `게시글이 정상적으로 삭제되었습니다.` })
-                //     }
             } catch (e) {
                 await connection.rollback();
                 next(e);
@@ -219,8 +175,7 @@ const controller = {
                     `,
                 [board_no, board_no]
             );
-            // if (results.length < 1) throw ({ success: `error`, message: `게시글이 존재하지 않습니다.` })
-            if (results.length < 1) throw Error(`해당 게시글이 존재하지 않습니다.`)
+            if (results.length < 1) throw utils.error(`해당 게시글이 존재하지 않습니다.`)
             else {
                 const is_mine = user_no === results[0].user_no ? true : false;
                 results[0].comments = results[0].comments === null ? 0 : results[0].comments
@@ -269,7 +224,7 @@ const controller = {
             `,
                 [board_no]
             );
-            if (result.length < 1) throw ({ success: `error`, result: {}, message: `게시글이 존재하지 않습니다.` });
+            if (result.length < 1) throw utils.error(`게시글이 존재하지 않습니다.`);
             else {
                 const connection = await pool.getConnection(async (conn) => conn);
                 try {
@@ -286,7 +241,7 @@ const controller = {
                     );
 
                     await connection.commit();
-                    next({ success: `ok`, result: {}, message: `좋아요 완료` })
+                    next({ message: `좋아요 완료` })
                 } catch (e) {
                     await connection.rollback();
                     next(e);

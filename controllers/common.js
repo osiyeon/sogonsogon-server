@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
-const utils = require('../utils');
+const {error, sign } = require('../utils');
 
 const controller = {
   async ping(req, res, next) {
@@ -38,7 +38,7 @@ const controller = {
         `,
         [email, nickname]
       );
-      if (result[0].count > 0) throw utils.error(`이메일이나 닉네임이 이미 존재합니다.`);
+      if (result[0].count > 0) throw error(`이메일이나 닉네임이 이미 존재합니다.`);
       else {
         const connection = await pool.getConnection(async (conn) => conn);
         try {
@@ -78,13 +78,13 @@ const controller = {
       `,
         [email, password]
       );
-      if (results.length < 1) throw utils.error(`이메일 또는 비밀번호가 일치하지 않습니다.`)
+      if (results.length < 1) throw error(`이메일 또는 비밀번호가 일치하지 않습니다.`)
       else {
         const user_no = results[0].no;
         const email = results[0].email;
         const region_bcode = results[0].region_bcode;
         const sector_no = results[0].sector_no;
-        const token = utils.sign({ user_no, email, region_bcode, sector_no });
+        const token = sign({ user_no, email, region_bcode, sector_no });
         next({ token, region_bcode, sector_no })
       }
     } catch (e) {
@@ -104,7 +104,7 @@ const controller = {
       `,
         [user_no]
       );
-      next(...results[0])
+      next({...results[0]})
     } catch (e) {
       next(e);
     }
@@ -123,7 +123,7 @@ const controller = {
       `,
         [nickname]
       );
-      if (result[0].count > 0) throw utils.error(`이미 존재하는 닉네임입니다.`);
+      if (result[0].count > 0) throw error(`이미 존재하는 닉네임입니다.`);
       else {
         const connection = await pool.getConnection(async (conn) => conn);
         try {
@@ -187,7 +187,6 @@ const controller = {
           FROM region_1
       ;`)
       next({ result })
-
     } catch (e) {
       next(e);
     }
@@ -261,7 +260,7 @@ const controller = {
       WHERE no = ?;
       `, [sector_no])
 
-      next({ success: `ok`, result: { ...region[0], ...sector[0] } })
+      next({ result: { ...region[0], ...sector[0] } })
 
     } catch (e) {
       next(e)

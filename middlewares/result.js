@@ -5,7 +5,6 @@ const json = {
     next(utils.error(`notFound`))
   },
   async result(data, req, res, next){
-    // console.log(data)
     if(data instanceof Error){
       res.status(data.code).json({message: data.message})
     }else{

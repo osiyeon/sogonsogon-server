@@ -1,4 +1,3 @@
-const e = require('express');
 const JWT = require('jsonwebtoken');
 const dayjs = require('dayjs');
 const config = require('../config');
@@ -46,16 +45,26 @@ module.exports = {
     });
     return results;
   },
+  param(data, key) {
+    if (Object.keys(data).length === 0) throw Error(`파라미터 없음`);
+    else {
+      if (data[key] === undefined) {
+        throw Error(`해당 파라미터( ${key} )가 없습니다. 입력해주세요`);
+      } else {
+        return data[key];
+      }
+    }
+  },
   error(data) {
     const err = new Error();
     httpStatus.map((status) => {
-        if(data === status.name){
-            err.code = status.code
-            err.message = status.defaultMessage
-        }
+      if (data === status.name) {
+        err.code = status.code;
+        err.message = status.defaultMessage;
+      }
     });
     err.code = err.code || 400;
-    err.message = err.message || data
+    err.message = err.message || data;
     return err;
   },
 };

@@ -9,16 +9,7 @@ const controller = {
       const user_no = req.users.user_no
       const board_no = req.query.board_no
       const text = req.body.text
-      const [ result1 ] = await pool.query(`
-          SELECT
-          COUNT(*) AS 'count'
-          FROM comments
-          WHERE enabled = 1
-          AND board_no = ?
-      `,[board_no, user_no])
 
-      if (result1[0].count > 1) throw ({ success: `error`, result: {}, message: `댓글이 이미 존재합니다.`});
-      
       const connection = await pool.getConnection(async (conn) => conn)
       try {
         await connection.beginTransaction()
@@ -31,7 +22,7 @@ const controller = {
           [user_no, board_no, text]
         )
         await connection.commit()
-        next({success: `ok`, result: {}, message: '댓글이 정상적으로 등록되었습니다.'})
+        next({ success: `ok`, result: {}, message: '댓글이 정상적으로 등록되었습니다.' })
       } catch (e) {
         await connection.rollback()
         next(e)
@@ -51,38 +42,54 @@ const controller = {
 
       const [results] = await pool.query(
         `
-        SELECT text
-        FROM comments
-        WHERE user_no = ?
-        AND board_no = ?
+        SELECT *
+        FROM boards 
+        WHERE no = ?
         AND enabled = 1
-        LIMIT ? OFFSET ? 
         `,
-        [user_no, board_no, Number(count), Number(page * count)]
+        [board_no]
       )
-      next({success: `ok`, result: {results}, message: '댓글이 정상적으로 등록되었습니다.'})
+
+      if (results.length < 1) throw Error(`해당 게시글이 존재하지 않습니다.`)
+      else {
+        const [results1] = await pool.query(
+          `
+          SELECT c.*, u.nickname
+          FROM comments c
+          INNER JOIN users u
+          ON u.no = c.user_no
+          WHERE c.board_no = ?
+          AND u.enabled = 1
+          AND c.enabled = 1
+          LIMIT ? OFFSET ? 
+          `,
+          [board_no, Number(count), Number(page * count)]
+        )
+        results1.map((result) => result.is_mine = user_no === result.user_no ? true : false)
+        utils.formatting_datetime(results1)
+        next({ comments: results1 })
+      }
     } catch (e) {
       next(e)
     }
   },
-  async removeComment(req,res,next){
-    try{
-      const board_no = req.query.board_no
+  async removeComment(req, res, next) {
+    try {
+      const user_no = req.users.user_no
       const comment_no = req.query.comment_no
 
-      const [ result1 ] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT
           COUNT(*) AS 'count'
           FROM comments
-          WHERE enabled = 1
-          AND board_no = ?
-          AND no = ?;
-      `,[board_no, comment_no])
+          WHERE no = ?
+          AND user_no = ?
+          AND enabled = 1
+      `, [comment_no, user_no])
 
-      if (result1[0].count < 1) throw ({ success: `error`, result: {}, message: `댓글이 존재하지 않습니다.`});
-
+      if (results[0].count < 1) throw Error(`댓글이 존재하지 않거나 삭제 권한이 없습니다.`);
       const connection = await pool.getConnection(async conn => conn)
-      try{
+      try {
         await connection.beginTransaction();
         await connection.query(`
             UPDATE
@@ -90,18 +97,19 @@ const controller = {
             SET
             remove_datetime = NOW(),
             enabled = 0
-            WHERE board_no = ?
-            AND no = ?
-        `,[board_no, comment_no])
+            WHERE no = ?
+            AND enabled = 1
+        `, [comment_no])
+
         await connection.commit()
-        next({success: `ok`, result: {}, message: '댓글이 정상적으로 삭제되었습니다.'})
-      }catch(e){
+        next({ message: '댓글이 정상적으로 삭제되었습니다.' })
+      } catch (e) {
         await connection.rollback()
         next(e)
-      }finally{
+      } finally {
         connection.release()
       }
-    }catch(e){
+    } catch (e) {
       next(e)
     }
   }

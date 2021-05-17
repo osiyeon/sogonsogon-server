@@ -13,9 +13,10 @@ const json = {
     }
   },
   async internalServerError(data, req, res, next) {
+    console.log(data.message)
     if (!data) next(error(`internalServerError`))
     else {
-      res.status(500).json({ message: data.sqlMessage })
+      res.status(500).json({ message: data.message })
     }
   },
 };

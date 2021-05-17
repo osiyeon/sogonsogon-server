@@ -46,6 +46,7 @@ const controller = {
     async editBoard(req, res, next) {
         try {
             const body = req.body
+            const user_no = req.users.user_no;
             const board_no = param(body, 'board_no')
             const title = param(body, 'title')
             const content = param(body, 'content')
@@ -57,9 +58,10 @@ const controller = {
             SELECT *
             FROM boards
             WHERE no = ?
+            AND user_no = ?
             AND enabled = 1;
             `,
-                [board_no]
+                [board_no, user_no]
             );
             if (result.length < 1) throw error(`게시글이 존재하지 않습니다.`);
             else {
@@ -158,6 +160,7 @@ const controller = {
                 b.no AS 'board_no',
                 b.region_bcode,
                 b.sector_no,
+                b.user_no,
                 b.title AS 'board_title',
                 b.content AS 'board_content',
                 b.views,
@@ -302,7 +305,6 @@ const controller = {
             );
             results1.map((result) => result.comments = result.comments === null ? 0 : result.comments)
             formatting_datetime(results1);
-
             next({ ...results[0], results1 })
         } catch (e) {
             next(e);

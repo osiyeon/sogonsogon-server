@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
-const {error, sign } = require('../utils');
+const { param, error, sign } = require('../utils');
 
 const controller = {
   async ping(req, res, next) {
@@ -20,12 +20,13 @@ const controller = {
   },
   async signUp(req, res, next) {
     try {
-      const email = req.body.email;
-      const password = req.body.password;
-      const nickname = req.body.nickname;
-      const region_bcode = req.body.region_bcode;
-      const sector_no = req.body.sector_no;
-      const image = req.file.location;
+      const body = req.body;
+      const email = param(body, 'email');
+      const password = param(body, 'password');
+      const nickname = param(body, 'nickname');
+      const region_bcode = param(body, 'region_bcode');
+      const sector_no = param(body, 'sector_no');
+      const image = param(body, 'image')
 
       const [result] = await pool.query(
         `
@@ -67,8 +68,9 @@ const controller = {
   },
   async login(req, res, next) {
     try {
-      var email = req.body.email;
-      var password = req.body.password;
+      const body = req.body
+      let email = param(body, 'email')
+      const password = param(body, 'password')
       const [results] = await pool.query(
         `
           SELECT * 
@@ -97,14 +99,18 @@ const controller = {
 
       const [results] = await pool.query(
         `
-        SELECT region_bcode, sector_no, email, nickname
+        SELECT 
+        region_bcode, 
+        sector_no, 
+        email, 
+        nickname
         FROM users
         WHERE enabled=1
         AND no = ?;
       `,
         [user_no]
       );
-      next({...results[0]})
+      next({ ...results[0] })
     } catch (e) {
       next(e);
     }
@@ -112,7 +118,7 @@ const controller = {
   async editNickname(req, res, next) {
     try {
       const user_no = req.users.user_no;
-      const nickname = req.body.nickname;
+      const nickname = param(req.body, 'nickname')
       const [result] = await pool.query(
         `
           SELECT
@@ -154,7 +160,7 @@ const controller = {
   async editPassword(req, res, next) {
     try {
       const user_no = req.users.user_no;
-      const editpassword = req.body.password;
+      const editpassword = param(req.body, 'password')
       const connection = await pool.getConnection(async (conn) => conn);
       try {
         await connection.beginTransaction();
@@ -193,7 +199,7 @@ const controller = {
   },
   async selectRegion2(req, res, next) {
     try {
-      const region_1_no = req.query.region_1_no
+      const region_1_no = param(req.query, 'region_1_no')
       const [result] = await pool.query(`
           SELECT *
           FROM region_2
@@ -206,7 +212,7 @@ const controller = {
   },
   async selectRegion3(req, res, next) {
     try {
-      const region_2_no = req.query.region_2_no
+      const region_2_no = param(req.query, 'region_2_no')
       const [result] = await pool.query(`
           SELECT *
           FROM region_3
@@ -219,7 +225,7 @@ const controller = {
   },
   async selectRegion4(req, res, next) {
     try {
-      const region_3_no = req.query.region_3_no
+      const region_3_no = param(req.query, 'region_3_no')
       const [result] = await pool.query(`
           SELECT *
           FROM region_4
@@ -243,14 +249,20 @@ const controller = {
   },
   async getName(req, res, next) {
     try {
-      const region_bcode = req.query.region_bcode
-      const sector_no = req.query.sector_no
+      const query = req.query
+      const region_bcode = param(query, 'region_bcode')
+      const sector_no = param(query, 'sector_no')
 
       const [region] = await pool.query(`
-      SELECT r4.bname AS r4_bname, r3.bname AS r3_bname, r2.bname AS r2_bname
+      SELECT 
+      r2.bname AS r2_bname,
+      r3.bname AS r3_bname, 
+      r4.bname AS r4_bname 
       FROM region_4 AS r4
-      INNER JOIN region_3 AS r3 ON r3.no = r4.region_3_no
-      INNER JOIN region_2 AS r2 ON r2.no = r3.region_2_no
+      INNER JOIN region_3 AS r3 
+      ON r3.no = r4.region_3_no
+      INNER JOIN region_2 AS r2 
+      ON r2.no = r3.region_2_no
       WHERE r4.bcode = ?;
       `, [region_bcode])
 
@@ -260,7 +272,8 @@ const controller = {
       WHERE no = ?;
       `, [sector_no])
 
-      next({ result: { ...region[0], ...sector[0] } })
+      if (region.length === 0 || sector.length === 0) throw error(`잘못된 region_bcode 또는 잘못된 sector_no 입니다.`)
+      next({ ...region[0], ...sector[0] })
 
     } catch (e) {
       next(e)

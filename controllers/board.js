@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 const dbconfig = require('../config/index').mysql;
 const pool = mysql.createPool(dbconfig);
 
-const {formatting_datetime, param, error} = require('../utils');
+const { formatting_datetime, param, error } = require('../utils');
 
 const controller = {
     async createBoard(req, res, next) {
@@ -87,7 +87,7 @@ const controller = {
                         [title, content, region_bcode, sector_no, board_no]
                     );
                     await connection.commit();
-                    next({message: `게시글이 정상적으로 변경되었습니다.`})
+                    next({ message: `게시글이 정상적으로 변경되었습니다.` })
                 } catch (e) {
                     await connection.rollback();
                     next(e);
@@ -100,7 +100,7 @@ const controller = {
         }
     },
     async removeBoard(req, res, next) {
-        try {   
+        try {
             const query = req.query
             const user_no = req.users.user_no;
             const board_no = param(query, 'board_no')
@@ -148,7 +148,7 @@ const controller = {
     },
     async board(req, res, next) {
         try {
-            const query = req.quer
+            const query = req.query
             const user_no = req.users.user_no;
             const board_no = param(query, 'board_no')
 
@@ -265,7 +265,7 @@ const controller = {
 
             const [results] = await pool.query(
                 `
-                SELECT count(*) AS 'total_count'
+                SELECT COUNT(*) AS 'total_count'
                 FROM boards 
                 WHERE user_no = ?
                 AND enabled = 1;
@@ -291,6 +291,7 @@ const controller = {
                     SELECT COUNT(*) AS 'comments', board_no
                     FROM comments
                     WHERE enabled = 1
+                    GROUP BY board_no
                 ) AS c
                 ON (b.no = c.board_no)
                 WHERE b.user_no = ?
@@ -340,6 +341,7 @@ const controller = {
                     SELECT COUNT(*) AS 'comments', board_no
                     FROM comments
                     WHERE enabled = 1
+                    GROUP BY board_no
                 ) AS c
                 ON b.no = c.board_no
                 LEFT OUTER JOIN users u
@@ -376,12 +378,12 @@ const controller = {
 
             const [result] = await pool.query(
                 `
-                SELECT count(*) AS 'total_count'
+                SELECT COUNT(*) AS 'total_count'
                 FROM boards 
-                WHERE region_bcode = ?
-                OR sector_no = ?
+                WHERE (region_bcode = ?
+                OR sector_no = ?)
                 AND enabled = 1
-                `, [region_no, sector_no,])
+                `, [region_no, sector_no])
 
             const [results] = await pool.query(
                 `
@@ -404,12 +406,13 @@ const controller = {
                     SELECT COUNT(*) AS 'comments', board_no
                     FROM comments
                     WHERE enabled = 1
+                    GROUP BY board_no
                 ) AS c
                 ON (b.no = c.board_no)
                 LEFT OUTER JOIN users u
                 ON u.no = b.user_no
-                WHERE b.region_bcode = ?
-                OR b.sector_no = ?
+                WHERE (b.region_bcode = ?
+                OR b.sector_no = ?)
                 AND b.enabled = 1
                 ORDER BY b.create_datetime DESC
                 LIMIT ? OFFSET ?
@@ -432,6 +435,15 @@ const controller = {
             const page = param(query, 'page')
             const count = param(query, 'count')
 
+            const [result] = await pool.query(
+                `
+                SELECT COUNT(*) AS 'total_count'
+                FROM boards 
+                WHERE (title LIKE ?
+                OR content LIKE ?)
+                AND enabled = 1
+                `, [`%${search}%`, `%${search}%`])
+
             const [results] = await pool.query(
                 `
                 SELECT 
@@ -453,6 +465,7 @@ const controller = {
                     SELECT COUNT(*) AS 'comments', board_no
                     FROM comments
                     WHERE enabled = 1
+                    GROUP BY board_no
                 ) AS c
                 ON (b.no = c.board_no)
                 LEFT OUTER JOIN users u
@@ -468,7 +481,7 @@ const controller = {
 
             results.map((result) => result.comments = result.comments === null ? 0 : result.comments)
             formatting_datetime(results);
-            next({ results })
+            next({ ...result[0], results })
         } catch (e) {
             next(e);
         }

@@ -1,18 +1,22 @@
-const utils = require('../utils');
+const { error } = require('../utils');
 
 const json = {
-  async notFound(req, res, next){
-    next(utils.error(`notFound`))
+  async notFound(req, res, next) {
+    next(error(`notFound`))
   },
-  async result(data, req, res, next){
-    if(data instanceof Error){
-      res.status(data.code).json({message: data.message})
-    }else{
-      res.status(200).json({...data})
+  async result(data, req, res, next) {
+    if (data instanceof Error) {
+      if (!Number.isInteger(data.code)) next(data)
+      res.status(data.code).json({ message: data.message })
+    } else {
+      res.status(200).json({ ...data })
     }
   },
-  async internalServerError(req, res, next) {
-    next(utils.error(`internalServerError`))
+  async internalServerError(data, req, res, next) {
+    if (!data) next(error(`internalServerError`))
+    else {
+      res.status(500).json({ message: data.sqlMessage })
+    }
   },
 };
 

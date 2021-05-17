@@ -23,7 +23,7 @@ const controller = {
           [user_no, board_no, text]
         )
         await connection.commit()
-        next({message: '댓글이 정상적으로 등록되었습니다.'})
+        next({ message: '댓글이 정상적으로 등록되었습니다.' })
       } catch (e) {
         await connection.rollback()
         next(e)
@@ -52,8 +52,16 @@ const controller = {
         [board_no]
       )
 
-      if (results.length < 1) throw utils.error(`해당 게시글이 존재하지 않습니다.`)
+      if (results.length < 1) throw error(`해당 게시글이 존재하지 않습니다.`)
       else {
+        const [result] = await pool.query(
+          `
+          SELECT COUNT(*) AS 'total_count'
+          FROM comments 
+          WHERE board_no = ?
+          AND enabled = 1
+          `, [board_no])
+
         const [results1] = await pool.query(
           `
           SELECT c.*, u.nickname
@@ -69,7 +77,7 @@ const controller = {
         )
         results1.map((result) => result.is_mine = user_no === result.user_no ? true : false)
         formatting_datetime(results1)
-        next({ comments: results1 })
+        next({ ...result[0], comments: results1 })
       }
     } catch (e) {
       next(e)
@@ -89,7 +97,7 @@ const controller = {
           AND enabled = 1
       `, [comment_no, user_no])
 
-      if (results[0].count < 1) throw utils.error(`댓글이 존재하지 않거나 삭제 권한이 없습니다.`);
+      if (results[0].count < 1) throw error(`댓글이 존재하지 않거나 삭제 권한이 없습니다.`);
       const connection = await pool.getConnection(async conn => conn)
       try {
         await connection.beginTransaction();

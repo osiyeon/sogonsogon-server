@@ -100,6 +100,7 @@ const controller = {
       const [results] = await pool.query(
         `
         SELECT 
+        no,
         region_bcode, 
         sector_no, 
         email, 
@@ -110,6 +111,7 @@ const controller = {
       `,
         [user_no]
       );
+
       next({ ...results[0] })
     } catch (e) {
       next(e);
@@ -200,12 +202,12 @@ const controller = {
   async selectRegion2(req, res, next) {
     try {
       const region_1_no = param(req.query, 'region_1_no')
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM region_2
           WHERE region_1_no = ?
       ;`, [region_1_no])
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e);
     }
@@ -213,12 +215,12 @@ const controller = {
   async selectRegion3(req, res, next) {
     try {
       const region_2_no = param(req.query, 'region_2_no')
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM region_3
           WHERE region_2_no = ?
       ;`, [region_2_no])
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e);
     }
@@ -226,23 +228,23 @@ const controller = {
   async selectRegion4(req, res, next) {
     try {
       const region_3_no = param(req.query, 'region_3_no')
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM region_4
           WHERE region_3_no = ?
       ;`, [region_3_no])
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e);
     }
   },
   async selectSectors(req, res, next) {
     try {
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM sectors
       ;`)
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e)
     }

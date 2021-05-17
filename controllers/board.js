@@ -46,9 +46,9 @@ const controller = {
     },
     async editBoard(req, res, next) {
         try {
-            const user_no = req.users.user_no
-            const body = req.body
             const user_no = req.users.user_no;
+
+            const body = req.body
             const board_no = param(body, 'board_no')
             const title = param(body, 'title')
             const content = param(body, 'content')
@@ -223,7 +223,7 @@ const controller = {
             next(e);
         }
     },
-    async like(req, res, next) {
+    async likeUp(req, res, next) {
         try {
             const query = req.query
             const board_no = param(query, 'board_no')
@@ -254,6 +254,49 @@ const controller = {
 
                     await connection.commit();
                     next({ message: `좋아요 완료` })
+                } catch (e) {
+                    await connection.rollback();
+                    next(e);
+                } finally {
+                    connection.release();
+                }
+            }
+        } catch (e) {
+            next(e);
+        }
+    },
+    async likeDown(req, res, next) {
+        try {
+            const query = req.query
+            const board_no = param(query, 'board_no')
+            const [result] = await pool.query(
+                `
+            SELECT *
+            FROM boards
+            WHERE no = ?
+            AND likes != 0
+            AND enabled = 1;
+            `,
+                [board_no]
+            );
+            if (result.length < 1) throw error(`게시글이 존재하지 않거나 좋아요 취소 불가`);
+            else {
+                const connection = await pool.getConnection(async (conn) => conn);
+                try {
+                    await connection.beginTransaction();
+                    await connection.query(
+                        `
+                    UPDATE boards
+                    SET 
+                    likes = IFNULL(likes, 0) - 1
+                    WHERE no = ?
+                    AND enabled = 1;
+                    `,
+                        [board_no]
+                    );
+
+                    await connection.commit();
+                    next({ message: `좋아요 취소` })
                 } catch (e) {
                     await connection.rollback();
                     next(e);

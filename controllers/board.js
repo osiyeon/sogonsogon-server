@@ -48,6 +48,7 @@ const controller = {
         try {
             const user_no = req.users.user_no
             const body = req.body
+            const user_no = req.users.user_no;
             const board_no = param(body, 'board_no')
             const title = param(body, 'title')
             const content = param(body, 'content')
@@ -164,6 +165,7 @@ const controller = {
                 u.nickname,
                 b.region_bcode,
                 b.sector_no,
+                b.user_no,
                 b.title AS 'board_title',
                 b.content AS 'board_content',
                 b.views,

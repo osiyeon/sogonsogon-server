@@ -26,7 +26,7 @@ const controller = {
       const nickname = param(body, 'nickname');
       const region_bcode = param(body, 'region_bcode');
       const sector_no = param(body, 'sector_no');
-      const image = param(body, 'image')
+      const image = param(req.file, 'location')
 
       const [result] = await pool.query(
         `

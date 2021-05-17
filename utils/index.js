@@ -2,6 +2,7 @@ const JWT = require('jsonwebtoken');
 const dayjs = require('dayjs');
 const config = require('../config');
 const { httpStatus } = require('../config/httpStatusCode');
+
 module.exports = {
   sign(user) {
     const payload = {
@@ -46,10 +47,10 @@ module.exports = {
     return results;
   },
   param(data, key) {
-    if (Object.keys(data).length === 0) throw Error(`파라미터 없음`);
+    if (Object.keys(data).length === 0) throw error(`파라미터 없음`);
     else {
       if (data[key] === undefined) {
-        throw Error(`해당 파라미터( ${key} )가 없습니다. 입력해주세요`);
+        throw error(`해당 파라미터( ${key} )가 없습니다. 입력해주세요`);
       } else {
         return data[key];
       }
@@ -61,10 +62,12 @@ module.exports = {
       if (data === status.name) {
         err.code = status.code;
         err.message = status.defaultMessage;
+        // console.log("~~", data, err.message);
       }
     });
     err.code = err.code || 400;
     err.message = err.message || data;
+    // console.log(err.message);
     return err;
   },
 };

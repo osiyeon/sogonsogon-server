@@ -64,7 +64,7 @@ const controller = {
 
         const [results1] = await pool.query(
           `
-          SELECT c.*, u.nickname
+          SELECT u.nickname, c.*
           FROM comments c
           INNER JOIN users u
           ON u.no = c.user_no

@@ -19,6 +19,7 @@ const controller = {
 
             if (category === 'region') region_no = category_no;
             else if (category == 'sector') sector_no = category_no;
+            else throw error(`category 를 정확하게 입력해주세요`)
 
             const connection = await pool.getConnection(async (conn) => conn);
             try {
@@ -45,6 +46,7 @@ const controller = {
     },
     async editBoard(req, res, next) {
         try {
+            const user_no = req.users.user_no
             const body = req.body
             const board_no = param(body, 'board_no')
             const title = param(body, 'title')
@@ -54,14 +56,15 @@ const controller = {
 
             const [result] = await pool.query(
                 `
-            SELECT *
-            FROM boards
-            WHERE no = ?
-            AND enabled = 1;
-            `,
-                [board_no]
+                SELECT *
+                FROM boards
+                WHERE no = ?
+                AND user_no = ?
+                AND enabled = 1;
+                `,
+                [board_no, user_no]
             );
-            if (result.length < 1) throw error(`게시글이 존재하지 않습니다.`);
+            if (result.length < 1) throw error(`게시글이 존재하지 않거나 수정 권한이 없습니다.`);
             else {
                 const connection = await pool.getConnection(async (conn) => conn);
                 try {
@@ -72,6 +75,7 @@ const controller = {
 
                     if (category === 'region') region_bcode = category_no;
                     else if (category == 'sector') sector_no = category_no;
+                    else throw error(`category 를 정확하게 입력해주세요`)
 
                     await connection.query(
                         `
@@ -156,6 +160,8 @@ const controller = {
                 `
                 SELECT 
                 b.no AS 'board_no',
+                b.user_no,
+                u.nickname,
                 b.region_bcode,
                 b.sector_no,
                 b.title AS 'board_title',
@@ -172,11 +178,13 @@ const controller = {
                     FROM comments 
                     WHERE board_no = ?
                     AND enabled = 1
-                    ) AS c 
-                    ON (b.no = c.board_no)
-                    WHERE b.no = ?
-                    AND b.enabled = 1;
-                    `,
+                ) AS c 
+                ON b.no = c.board_no
+                INNER JOIN users u
+                ON u.no = b.user_no
+                WHERE b.no = ?
+                AND b.enabled = 1;
+                `,
                 [board_no, board_no]
             );
             if (results.length < 1) throw error(`해당 게시글이 존재하지 않습니다.`)
@@ -203,7 +211,6 @@ const controller = {
                     next({ is_mine, ...results[0] })
                 } catch (e) {
                     await connection.rollback();
-                    //throw e
                     next(e);
                 } finally {
                     connection.release();
@@ -263,7 +270,7 @@ const controller = {
             const count = param(query, 'count')
             const page = param(query, 'page')
 
-            const [results] = await pool.query(
+            const [result] = await pool.query(
                 `
                 SELECT COUNT(*) AS 'total_count'
                 FROM boards 
@@ -271,11 +278,12 @@ const controller = {
                 AND enabled = 1;
                 `, [user_no])
 
-            const [results1] = await pool.query(
+            const [results] = await pool.query(
                 `
                 SELECT 
                 b.no AS 'board_no',
                 b.user_no,
+                u.nickname,
                 b.region_bcode,
                 b.sector_no,
                 b.title AS 'board_title',
@@ -293,17 +301,18 @@ const controller = {
                     WHERE enabled = 1
                     GROUP BY board_no
                 ) AS c
-                ON (b.no = c.board_no)
-                WHERE b.user_no = ?
-                AND b.enabled = 1
+                ON b.no = c.board_no
+                INNER JOIN users u
+                ON u.no = b.user_no && b.user_no = ?
+                WHERE b.enabled = 1
                 ORDER BY b.create_datetime DESC
                 LIMIT ? OFFSET ?
             `, [user_no, Number(count), Number(page * count)]
             );
-            results1.map((result) => result.comments = result.comments === null ? 0 : result.comments)
-            formatting_datetime(results1);
+            results.map((result) => result.comments = result.comments === null ? 0 : result.comments)
+            formatting_datetime(results);
 
-            next({ ...results[0], results1 })
+            next({ ...result[0], results })
         } catch (e) {
             next(e);
         }
@@ -319,6 +328,7 @@ const controller = {
 
             if (category === 'region') region_no = category_no;
             else if (category == 'sector') sector_no = category_no;
+            else throw error(`category 를 정확하게 입력해주세요`)
 
             const [results] = await pool.query(
                 `
@@ -375,6 +385,7 @@ const controller = {
 
             if (category === 'region') region_no = category_no;
             else if (category == 'sector') sector_no = category_no;
+            else throw error(`category 를 정확하게 입력해주세요`)
 
             const [result] = await pool.query(
                 `

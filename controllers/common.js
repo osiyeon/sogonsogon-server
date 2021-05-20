@@ -54,7 +54,7 @@ const controller = {
             [email, password, nickname, region_bcode, sector_no, image]
           );
           await connection.commit();
-          next({ message: `회원가입이 정상적으로 이루어졌습니다.` })
+          next({ message: `회원가입 요청이 정상적으로 이루어졌습니다.` })
         } catch (e) {
           await connection.rollback();
           next(e);
@@ -100,6 +100,7 @@ const controller = {
       const [results] = await pool.query(
         `
         SELECT 
+        no,
         region_bcode, 
         sector_no, 
         email, 
@@ -110,6 +111,7 @@ const controller = {
       `,
         [user_no]
       );
+
       next({ ...results[0] })
     } catch (e) {
       next(e);
@@ -200,12 +202,12 @@ const controller = {
   async selectRegion2(req, res, next) {
     try {
       const region_1_no = param(req.query, 'region_1_no')
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM region_2
           WHERE region_1_no = ?
       ;`, [region_1_no])
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e);
     }
@@ -213,12 +215,12 @@ const controller = {
   async selectRegion3(req, res, next) {
     try {
       const region_2_no = param(req.query, 'region_2_no')
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM region_3
           WHERE region_2_no = ?
       ;`, [region_2_no])
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e);
     }
@@ -226,23 +228,23 @@ const controller = {
   async selectRegion4(req, res, next) {
     try {
       const region_3_no = param(req.query, 'region_3_no')
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM region_4
           WHERE region_3_no = ?
       ;`, [region_3_no])
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e);
     }
   },
   async selectSectors(req, res, next) {
     try {
-      const [result] = await pool.query(`
+      const [results] = await pool.query(`
           SELECT *
           FROM sectors
       ;`)
-      next({ result })
+      next({ results })
     } catch (e) {
       next(e)
     }
@@ -256,14 +258,11 @@ const controller = {
       const [region] = await pool.query(`
       SELECT 
       r2.bname AS r2_bname,
-      r3.bname AS r3_bname, 
-      r4.bname AS r4_bname 
-      FROM region_4 AS r4
-      INNER JOIN region_3 AS r3 
-      ON r3.no = r4.region_3_no
+      r3.bname AS r3_bname 
+      FROM region_3 AS r3 
       INNER JOIN region_2 AS r2 
       ON r2.no = r3.region_2_no
-      WHERE r4.bcode = ?;
+      WHERE r3.bcode = ?;
       `, [region_bcode])
 
       const [sector] = await pool.query(`

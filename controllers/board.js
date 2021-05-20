@@ -46,9 +46,9 @@ const controller = {
     },
     async editBoard(req, res, next) {
         try {
-            const user_no = req.users.user_no
-            const body = req.body
             const user_no = req.users.user_no;
+
+            const body = req.body
             const board_no = param(body, 'board_no')
             const title = param(body, 'title')
             const content = param(body, 'content')
@@ -190,41 +190,50 @@ const controller = {
                 [board_no, board_no]
             );
             if (results.length < 1) throw error(`해당 게시글이 존재하지 않습니다.`)
-            else {
-                const is_mine = user_no === results[0].user_no ? true : false;
-                results[0].comments = results[0].comments === null ? 0 : results[0].comments
+            const is_mine = user_no === results[0].user_no ? true : false;
+            results[0].comments = results[0].comments === null ? 0 : results[0].comments
+            const category = results[0].region_bcode === null ? 'sector' : 'region'
 
-                const connection = await pool.getConnection(async (conn) => conn);
-                try {
-                    await connection.beginTransaction();
-                    await connection.query(
-                        `
-                    UPDATE boards
-                    SET 
-                    views = IFNULL(views, 0) + 1
-                    WHERE no = ?
-                    AND enabled = 1;
-                    `,
-                        [board_no]
-                    ); // 조회수 수정
+            const [like] = await pool.query(`
+                SELECT *
+                FROM likes
+                WHERE user_no = ?
+                AND board_no = ?
+                `, [user_no, board_no]);
 
-                    formatting_datetime(results);
-                    await connection.commit();
-                    next({ is_mine, ...results[0] })
-                } catch (e) {
-                    await connection.rollback();
-                    next(e);
-                } finally {
-                    connection.release();
-                }
+            const is_like = like.length === 0 ? true : false;
+            const connection = await pool.getConnection(async (conn) => conn);
+            try {
+                await connection.beginTransaction();
+                await connection.query(
+                    `
+                        UPDATE boards
+                        SET 
+                        views = IFNULL(views, 0) + 1
+                        WHERE no = ?
+                        AND enabled = 1;
+                        `,
+                    [board_no]
+                ); // 조회수 수정
+
+                formatting_datetime(results);
+                await connection.commit();
+                next({ is_like, is_mine, category, ...results[0] })
+            } catch (e) {
+                await connection.rollback();
+                next(e);
+            } finally {
+                connection.release();
             }
         } catch (e) {
             //throw e;
             next(e);
         }
     },
-    async like(req, res, next) {
+    async likeUp(req, res, next) {
         try {
+            const user_no = req.users.user_no
+
             const query = req.query
             const board_no = param(query, 'board_no')
             const [result] = await pool.query(
@@ -237,29 +246,103 @@ const controller = {
                 [board_no]
             );
             if (result.length < 1) throw error(`게시글이 존재하지 않습니다.`);
-            else {
-                const connection = await pool.getConnection(async (conn) => conn);
-                try {
-                    await connection.beginTransaction();
-                    await connection.query(
-                        `
+            const connection = await pool.getConnection(async (conn) => conn);
+            try {
+                const [like] = await pool.query(`
+                SELECT *
+                FROM likes
+                WHERE user_no = ?
+                AND board_no = ?
+                `, [user_no, board_no])
+
+                if (like.length >= 1) throw error(`좋아요 불가. 이미 좋아요가 되어있습니다.`)
+
+                await connection.beginTransaction();
+                await connection.query(
+                    `INSERT INTO likes
+                    (user_no, board_no)
+                    VALUES (?, ?);
+                    `,
+                    [user_no, board_no]
+                );
+
+                await connection.query(
+                    `
                     UPDATE boards
                     SET 
                     likes = IFNULL(likes, 0) + 1
                     WHERE no = ?
                     AND enabled = 1;
                     `,
-                        [board_no]
-                    );
+                    [board_no]
+                );
 
-                    await connection.commit();
-                    next({ message: `좋아요 완료` })
-                } catch (e) {
-                    await connection.rollback();
-                    next(e);
-                } finally {
-                    connection.release();
-                }
+                await connection.commit();
+                next({ message: `좋아요 완료` })
+            } catch (e) {
+                await connection.rollback();
+                next(e);
+            } finally {
+                connection.release();
+            }
+
+        } catch (e) {
+            next(e);
+        }
+    },
+    async likeDown(req, res, next) {
+        try {
+            const user_no = req.users.user_no
+
+            const query = req.query
+            const board_no = param(query, 'board_no')
+            const [result] = await pool.query(
+                `
+            SELECT *
+            FROM boards
+            WHERE no = ?
+            AND enabled = 1;
+            `,
+                [board_no]
+            );
+            if (result.length < 1) throw error(`게시글이 존재하지 않습니다.`);
+
+            const connection = await pool.getConnection(async (conn) => conn);
+            try {
+                const [like] = await pool.query(`
+                SELECT *
+                FROM likes
+                WHERE user_no = ?
+                AND board_no = ?
+                `, [user_no, board_no])
+
+                if (like.length < 1) throw error(`좋아요 취소 불가. 이미 좋아요 취소가 되어있습니다.`)
+
+                await connection.beginTransaction();
+                await connection.query(`
+                    DELETE 
+                    FROM likes
+                    WHERE user_no = ?
+                    AND board_no = ?
+                    `, [user_no, board_no])
+                await connection.query(
+                    `
+                    UPDATE boards
+                    SET 
+                    likes = IFNULL(likes, 0) - 1
+                    WHERE no = ?
+                    AND enabled = 1;
+                    `,
+                    [board_no]
+                );
+
+                await connection.commit();
+                next({ message: `좋아요 취소` })
+            } catch (e) {
+                await connection.rollback();
+                next(e);
+            } finally {
+                connection.release();
             }
         } catch (e) {
             next(e);
@@ -358,10 +441,10 @@ const controller = {
                 ON b.no = c.board_no
                 LEFT OUTER JOIN users u
                 ON u.no = b.user_no
-                WHERE b.region_bcode = ?
-                OR b.sector_no = ?
+                WHERE (b.region_bcode = ?
+                OR b.sector_no = ?)
                 AND b.enabled = 1
-                ORDER BY b.likes DESC, b.views DESC
+                ORDER BY b.likes DESC, comments DESC, b.views DESC
                 LIMIT 5;
                 `, [region_no, sector_no]
             );

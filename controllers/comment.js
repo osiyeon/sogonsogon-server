@@ -42,7 +42,7 @@ const controller = {
       const page = param(query, 'page')
       const count = param(query, 'count')
 
-      const [results] = await pool.query(
+      const [result] = await pool.query(
         `
         SELECT *
         FROM boards 
@@ -52,7 +52,7 @@ const controller = {
         [board_no]
       )
 
-      if (results.length < 1) throw error(`해당 게시글이 존재하지 않습니다.`)
+      if (result.length < 1) throw error(`해당 게시글이 존재하지 않습니다.`)
       else {
         const [result] = await pool.query(
           `
@@ -62,7 +62,7 @@ const controller = {
           AND enabled = 1
           `, [board_no])
 
-        const [results1] = await pool.query(
+        const [results] = await pool.query(
           `
           SELECT u.nickname, c.*
           FROM comments c
@@ -75,9 +75,9 @@ const controller = {
           `,
           [board_no, Number(count), Number(page * count)]
         )
-        results1.map((result) => result.is_mine = user_no === result.user_no ? true : false)
-        formatting_datetime(results1)
-        next({ ...result[0], comments: results1 })
+        results.map((result) => result.is_mine = user_no === result.user_no ? true : false)
+        formatting_datetime(results)
+        next({ ...result[0], results })
       }
     } catch (e) {
       next(e)
